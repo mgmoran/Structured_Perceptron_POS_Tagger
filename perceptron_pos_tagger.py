@@ -1,4 +1,4 @@
-### new version ###
+### Training a structured perceptron on PTB data to predict POS tags. ###
 from collections import defaultdict
 import os
 import sys
@@ -10,8 +10,6 @@ from scorer import compute_acc
 
 class Perceptron_POS_Tagger(object):
     def __init__(self,):
-        ''' Modify if necessary.
-        '''
         self.unk = '*UNKNOWN*'
         self.start = '*START*'
         self.stop = '*STOP*'
@@ -24,6 +22,7 @@ class Perceptron_POS_Tagger(object):
         self.a = None
 
     def viterbi(self,test_instance):
+        """ Implements viterbi."""
         sent = test_instance.snt
         v = np.zeros((len(self.labelset), len(sent)), dtype=np.int64)
         backpointer = np.zeros((len(self.labelset), len(sent)),dtype=float)
@@ -68,8 +67,7 @@ class Perceptron_POS_Tagger(object):
         return tagged_data
 
     def train(self, train_data, dev_gold, dev_plain):
-        ''' Implement the Perceptron training algorithm here.
-        '''
+        """Implements the perceptron training algorithm. Converges as soon as dev accuracy dips."""
         print("training...")
         for word in vocabulary:
             self.featureset.update(["word0=" + word, "word1=" + word, "word_1=" + word, "word2=" + word, "word_2=" + word])
@@ -78,6 +76,7 @@ class Perceptron_POS_Tagger(object):
             if len(word) > 4:
                 self.featureset.update(["suffix=" + word[-3:]])
         training_data = train_data
+        
         ## making room for previous tag feature ##
         self.featureset.update(["pos_1=" + x for x in self.labelset])
         self.featureset = list(self.featureset)
@@ -87,11 +86,13 @@ class Perceptron_POS_Tagger(object):
         labelindices = zip(self.labelset,range(len(self.labelset)))
         self.featuredict.update({k[0]:k[1] for k in featureindices})
         self.labeldict.update({k[0]:k[1] for k in labelindices})
+        
         ### every feature assigned to a weight, initialized at 0.0 ###
         self.theta = dict()
         for feature in self.featureset:
             self.theta[feature] = np.zeros((len(self.labelset)),dtype=float)
         self.theta["bias"] = np.ones((len(self.labelset)),dtype=float)
+        
         ### training ###
         lastdevacc = 0
         acc = 0
@@ -128,6 +129,7 @@ class Perceptron_POS_Tagger(object):
             predicted_label_index = self.labeldict[predicted_tag]
             if correct != predicted_tag:
                 for feature in instance.featurelist[position]:
+                    
                     ### handling unknowns ###
                     try:
                         self.theta[feature][predicted_label_index] -= 1
@@ -137,6 +139,7 @@ class Perceptron_POS_Tagger(object):
                         feature = feature_stem + "=" + self.unk  ## construct unk feature from it
                         self.theta[feature][predicted_label_index] -= 1
                         self.theta[feature][correct_label_index] += 1
+                ### previous tag
                 if position != 0:
                     previous_tag = zipped[position - 1][1]
                     self.theta["pos_1=" + previous_tag][predicted_label_index] -= 1

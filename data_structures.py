@@ -2,6 +2,7 @@ vocabulary = set(['*START*','*STOP*','*UNKNOWN*'])
 labels = set()
 
 def extract_vocabulary(filename):
+    """ Extracts training vocabulary. """
     print("reading in vocabulary...")
     with open(filename) as f:
         lines = f.readlines()
@@ -16,9 +17,7 @@ class Sentence(object):
         self.featurelist = features
 
     def features(self):
-        ''' Implement your feature extraction code here. This takes annotated or unannotated sentence
-        and return a set of features
-        '''
+        """ Collects basic features from an unannotated sentence, using a window size of 5."""
         position = 0
         sent = self.snt
         if isinstance(sent[0],list):
